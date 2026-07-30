@@ -4,7 +4,7 @@
 
 ## 주요 기능
 
-- 해운대·광안리·송정·일광·송도·다대포 정보 구조 제공. 실제 수치는 API 연결 전까지 `연동 대기`로 표시
+- 해운대·광안리·송정·일광·송도·다대포 정보 구조 제공. 확인되지 않은 실시간 수치는 `정보 없음`으로 표시
 - 안전·주의·위험 3단계 종합 상태와 색상 마커 지도
 - 해파리 및 쓰레기 신고, 사진 미리보기, 입력 검증, 상태 변경·삭제
 - `localStorage` 저장으로 새로고침 후에도 신고 유지
@@ -20,7 +20,6 @@
 ├─ css/styles.css
 ├─ js/
 │  ├─ app.js       # 화면과 사용자 상호작용
-│  ├─ api.js       # 실제 API 연결 지점
 │  ├─ data.js      # 해변 목록과 빈 운영 데이터 구조
 │  └─ storage.js   # localStorage 저장소 어댑터
 ├─ package.json
@@ -46,16 +45,9 @@ npm run dev
 
 Vite 빌드 결과를 배포하는 경우 GitHub Actions에서 `npm ci`, `npm run build` 후 `dist` 폴더를 Pages artifact로 업로드하세요.
 
-## 실제 API 연결
+## 데이터 안내
 
-`js/api.js`의 `USE_MOCK`을 `false`로 바꾸고 `fetchBeachConditions()`의 `YOUR_API_PROXY_URL`을 실제 중계 API 주소로 교체합니다. API 연결 전에는 임의 수치를 표시하지 않습니다.
-
-- 기상청 단기예보/생활기상지수: 기온, 강수, 풍속, 자외선
-- 국립해양조사원 또는 해양수산부: 수온, 파고
-- 부산광역시 공공데이터: 해수욕장 입수 통제, 혼잡도, 편의시설
-- 공공데이터포털: 각 기관 API의 서비스 키 발급
-
-정적 GitHub Pages에 서비스 키를 직접 넣으면 누구나 볼 수 있습니다. Cloudflare Worker, Firebase Functions 또는 Supabase Edge Functions 같은 서버리스 프록시에 키를 보관하고, 웹앱은 프록시 URL만 호출하는 방식을 권장합니다. API 응답은 `data.js`의 해변 객체 형식으로 변환해야 합니다.
+이 버전은 공공데이터 API를 사용하지 않습니다. 확인되지 않은 날씨·수온·파고·혼잡도·입수 가능 여부는 임의로 만들지 않고 `정보 없음` 또는 `현장 확인 필요`로 표시합니다. 해변 기본 정보와 편의시설 목록은 `js/data.js`에서 관리하고, 시민 신고는 브라우저의 `localStorage`에 저장합니다.
 
 ## 저장소 교체
 
