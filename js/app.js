@@ -1,8 +1,19 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let selected="haeundae",activeFilters=new Set(),reports=reportStore.get(sampleReports),photoData="",userLocation=null;
-const apiPendingMode=new URLSearchParams(location.search).get("mode")==="api-pending";
+const pageMode=new URLSearchParams(location.search).get("mode");
+const apiPendingMode=pageMode==="api-pending";
+const demoMode=pageMode==="demo";
 const unavailableText=apiPendingMode?"연동 대기":"정보 없음";
 const beachStatusText=b=>apiPendingMode?"연동 대기":b.statusText;
+const demoBeachData={
+ haeundae:{status:"caution",statusText:"주의",temp:29,water:24,wave:0.7,wind:3.8,uv:7,rain:"없음",crowd:"혼잡",swim:"가능",jelly:"보통",desc:"혼잡도가 높아 주변을 살피며 이용하세요."},
+ gwangalli:{status:"safe",statusText:"안전",temp:28,water:24,wave:0.5,wind:3.2,uv:6,rain:"없음",crowd:"보통",swim:"가능",jelly:"낮음",desc:"비교적 잔잔한 시연용 상태입니다."},
+ songjeong:{status:"caution",statusText:"주의",temp:27,water:23,wave:1.1,wind:5.4,uv:6,rain:"없음",crowd:"보통",swim:"주의",jelly:"낮음",desc:"파고와 바람을 주의하는 시연용 상태입니다."},
+ ilgwang:{status:"safe",statusText:"안전",temp:27,water:23,wave:0.4,wind:2.7,uv:5,rain:"없음",crowd:"한적",swim:"가능",jelly:"낮음",desc:"한적한 해변으로 추천되는 시연용 상태입니다."},
+ songdo:{status:"safe",statusText:"안전",temp:28,water:24,wave:0.3,wind:2.9,uv:6,rain:"없음",crowd:"보통",swim:"가능",jelly:"낮음",desc:"해변 이용이 원활한 시연용 상태입니다."},
+ dadaepo:{status:"caution",statusText:"주의",temp:28,water:25,wave:0.8,wind:4.6,uv:7,rain:"약한 비 가능",crowd:"한적",swim:"주의",jelly:"보통",desc:"강수 가능성을 확인하는 시연용 상태입니다."}
+};
+if(demoMode)beaches.forEach(beach=>Object.assign(beach,demoBeachData[beach.id]));
 const beachCoordinates={haeundae:[35.1587,129.1604],gwangalli:[35.1532,129.1187],songjeong:[35.1786,129.1997],ilgwang:[35.2592,129.2333],songdo:[35.0755,129.0173],dadaepo:[35.0466,128.9657]};
 const statusIcon={safe:"✓",caution:"!",danger:"×",unknown:"…"},statusLabel={received:"접수",checking:"확인 중",done:"처리 완료"};
 const beachName=id=>beaches.find(b=>b.id===id)?.name||id;
@@ -24,7 +35,7 @@ function reportPins(){return reports.map((r,i)=>{const b=beaches.find(x=>x.id===
 function renderHome(){
  const b=beaches.find(x=>x.id===selected);
  const description=apiPendingMode?"서비스 키 발급 후 실제 공공데이터가 표시됩니다.":b.desc;
- const subtext=apiPendingMode?"현재 공공데이터 API 연동 대기 중입니다.":"실시간 수치는 제공하지 않습니다. 현장 안내를 우선 확인하세요.";
+ const subtext=apiPendingMode?"현재 공공데이터 API 연동 대기 중입니다.":demoMode?"아래 수치는 기능 시연을 위한 예시이며 실제 정보가 아닙니다.":"실시간 수치는 제공하지 않습니다. 현장 안내를 우선 확인하세요.";
  $("#statusHero").innerHTML=`<div class="status-icon">${statusIcon[b.status]}</div><div><p>${b.name} 종합 상태</p><h2>${description}</h2><p>${subtext}</p></div><span class="status-badge ${b.status}">${beachStatusText(b)}</span>`;
  const pending=unavailableText,metrics=[["🌤","기온",b.temp==null?pending:`${b.temp}°C`],["🌡","수온",b.water==null?pending:`${b.water}°C`],["🌊","파고",b.wave==null?pending:`${b.wave}m`],["🍃","풍속",b.wind==null?pending:`${b.wind}m/s`],["☀","자외선",b.uv==null?pending:String(b.uv)],["☂","강수",b.rain??pending],["♟","혼잡도",b.crowd??pending],["🏊","입수",b.swim??(apiPendingMode?pending:"현장 확인 필요")],["🪼","해파리",b.jelly??pending]];
  $("#metrics").innerHTML=metrics.map(m=>`<article class="metric"><span>${m[0]}</span><div><p>${m[1]}</p><strong>${m[2]}</strong></div></article>`).join("");
@@ -60,6 +71,7 @@ function getLocation(onSuccess){if(!navigator.geolocation){toast("위치 기능�
 function loadData(){renderHome()}
 try{
  if(apiPendingMode)$("#serviceMode").innerHTML="<i></i> 공공데이터 API 연동 대기 중";
+ if(demoMode)$("#serviceMode").innerHTML="<i></i> 시연용 예시 데이터";
  options();renderHome();renderFacilities();renderMap();renderReports();loadData();
 }catch(error){
  console.error("바다모아 초기화 오류:",error);
