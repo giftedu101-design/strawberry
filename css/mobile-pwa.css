@@ -8,6 +8,25 @@
   font-weight: 700;
 }
 
+.facility-map .facility-marker {
+  z-index: 5;
+}
+
+.map-empty {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: max-content;
+  max-width: 80%;
+  margin: 0;
+  padding: 10px 14px;
+  transform: translate(-50%, -50%);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .92);
+  color: #617982;
+  font-weight: 700;
+  text-align: center;
+}
+
 @media (max-width: 560px) {
   .install-btn {
     padding: 0 10px;
