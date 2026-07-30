@@ -20,8 +20,8 @@ function marker(b,detail=false){return `<button class="marker ${b.status}" style
 function reportPins(){return reports.map((r,i)=>{const b=beaches.find(x=>x.id===r.beach);return `<button class="report-pin" style="left:${Math.min(94,b.x+(i%3)*3)}%;top:${Math.min(90,b.y+8+(i%2)*4)}%" data-report="${r.id}" aria-label="${beachName(r.beach)} ${r.type==="jellyfish"?"해파리":"쓰레기"} 신고">${r.type==="jellyfish"?"🪼":"♻"}</button>`}).join("")}
 function renderHome(){
  const b=beaches.find(x=>x.id===selected);
- $("#statusHero").innerHTML=`<div class="status-icon">${statusIcon[b.status]}</div><div><p>${b.name} 종합 상태</p><h2>${b.desc}</h2><p>현재 실제 운영 데이터가 연결되지 않았습니다.</p></div><span class="status-badge ${b.status}">${b.statusText}</span>`;
- const pending="연동 대기",metrics=[["🌤","기온",b.temp==null?pending:`${b.temp}°C`],["🌡","수온",b.water==null?pending:`${b.water}°C`],["🌊","파고",b.wave==null?pending:`${b.wave}m`],["🍃","풍속",b.wind==null?pending:`${b.wind}m/s`],["☀","자외선",b.uv==null?pending:String(b.uv)],["☂","강수",b.rain??pending],["♟","혼잡도",b.crowd??pending],["🏊","입수",b.swim??pending],["🪼","해파리",b.jelly??pending]];
+ $("#statusHero").innerHTML=`<div class="status-icon">${statusIcon[b.status]}</div><div><p>${b.name} 종합 상태</p><h2>${b.desc}</h2><p>실시간 수치는 제공하지 않습니다. 현장 안내를 우선 확인하세요.</p></div><span class="status-badge ${b.status}">${b.statusText}</span>`;
+ const pending="정보 없음",metrics=[["🌤","기온",b.temp==null?pending:`${b.temp}°C`],["🌡","수온",b.water==null?pending:`${b.water}°C`],["🌊","파고",b.wave==null?pending:`${b.wave}m`],["🍃","풍속",b.wind==null?pending:`${b.wind}m/s`],["☀","자외선",b.uv==null?pending:String(b.uv)],["☂","강수",b.rain??pending],["♟","혼잡도",b.crowd??pending],["🏊","입수",b.swim??"현장 확인 필요"],["🪼","해파리",b.jelly??pending]];
  $("#metrics").innerHTML=metrics.map(m=>`<article class="metric"><span>${m[0]}</span><div><p>${m[1]}</p><strong>${m[2]}</strong></div></article>`).join("");
  renderRecommendation(b);
  $("#miniMap").innerHTML=beaches.map(b=>marker(b)).join("");
@@ -32,14 +32,14 @@ function renderMap(){
  $("#fullMap").innerHTML=beaches.map(b=>marker(b,true)).join("")+reportPins();
  renderMapDetail(selected);bindMapButtons();$$("[data-report]").forEach(el=>el.onclick=()=>showReport(el.dataset.report));
 }
-function renderMapDetail(id){const b=beaches.find(x=>x.id===id),count=reports.filter(r=>r.beach===id).length;$("#mapDetail").innerHTML=`<article class="detail-card"><div><h2>${b.name} <span class="status-badge ${b.status}">${b.statusText}</span></h2><p>${b.desc}</p></div><div><strong>입수 ${b.swim??"연동 대기"}</strong><br><span>파고 ${b.wave==null?"연동 대기":b.wave+"m"} · 사용자 신고 ${count}건</span></div></article>`}
+function renderMapDetail(id){const b=beaches.find(x=>x.id===id),count=reports.filter(r=>r.beach===id).length;$("#mapDetail").innerHTML=`<article class="detail-card"><div><h2>${b.name} <span class="status-badge ${b.status}">${b.statusText}</span></h2><p>${b.desc}</p></div><div><strong>입수 ${b.swim??"현장 확인 필요"}</strong><br><span>파고 ${b.wave==null?"정보 없음":b.wave+"m"} · 사용자 신고 ${count}건</span></div></article>`}
 function bindMapButtons(){$$("[data-beach]").forEach(el=>el.onclick=()=>{selected=el.dataset.beach;$("#beachSelect").value=selected;renderHome();renderMap();toast(`${beachName(selected)} 정보를 열었습니다.`)})}
 const filters=["샤워장","탈의실","화장실","짐 보관소","음수대","온수","드라이기","대형 짐 보관","무료 이용","운영 중"];
 function renderFacilities(){
  $("#facilityFilters").innerHTML=filters.map(f=>`<button class="${activeFilters.has(f)?"active":""}" data-filter="${f}">${f}</button>`).join("");
  let list=facilities.filter(f=>(f.beach===selected||selected==="haeundae")&&[...activeFilters].every(x=>f.filters.includes(x)));if(!list.length)list=facilities.filter(f=>[...activeFilters].every(x=>f.filters.includes(x)));
  $("#facilityCount").textContent=`조건에 맞는 시설 ${list.length}곳`;
- $("#facilityList").innerHTML=list.length?list.map(f=>`<article class="facility-card"><p>${f.type} · 내 위치 ${f.distance<1000?f.distance+"m":(f.distance/1000).toFixed(1)+"km"}</p><h3>${f.name}</h3><div>${f.filters.map(x=>`<span class="tag">${x}</span>`).join("")}</div><p><strong>${f.price}</strong> · ${f.hours}</p></article>`).join(""):"<p>검증된 시설 데이터가 아직 연결되지 않았습니다.</p>";
+ $("#facilityList").innerHTML=list.length?list.map(f=>`<article class="facility-card"><p>${f.type} · 내 위치 ${f.distance<1000?f.distance+"m":(f.distance/1000).toFixed(1)+"km"}</p><h3>${f.name}</h3><div>${f.filters.map(x=>`<span class="tag">${x}</span>`).join("")}</div><p><strong>${f.price}</strong> · ${f.hours}</p></article>`).join(""):"<p>조건에 맞는 등록 시설이 없습니다.</p>";
  $("#facilityMap").innerHTML=list.map((f,i)=>`<button class="marker safe" style="left:${f.x}%;top:${f.y}%" aria-label="${f.name}"><span>${i+1}</span></button>`).join("");
  $$("[data-filter]").forEach(el=>el.onclick=()=>{activeFilters.has(el.dataset.filter)?activeFilters.delete(el.dataset.filter):activeFilters.add(el.dataset.filter);renderFacilities()});
 }
@@ -52,7 +52,7 @@ function showReport(id){const r=reports.find(x=>x.id===id);$("#modalContent").in
 function switchView(id){$$(".view").forEach(v=>v.classList.toggle("active",v.id===id));$$("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===id));if(id==="map")renderMap();if(id==="facilities")renderFacilities();if(id==="report")renderReports();scrollTo({top:0,behavior:"smooth"})}
 function setReportType(type){$("#reportType").value=type;$$("[data-report-tab]").forEach(b=>b.classList.toggle("active",b.dataset.reportTab===type));$("#trashTypeWrap").classList.toggle("hidden",type!=="trash");$("#amountWrap").classList.toggle("hidden",type!=="trash");$("#trashType").required=type==="trash";$("#amount").required=type==="trash";$("#memo").placeholder=type==="trash"?"쓰레기의 범위와 주변 상황을 자세히 알려주세요.":"해파리 크기, 색상, 마릿수를 알려주세요."}
 function getLocation(onSuccess){if(!navigator.geolocation){toast("위치 기능을 지원하지 않아 선택한 해변을 기준으로 추천합니다.");return}navigator.geolocation.getCurrentPosition(p=>{userLocation=[p.coords.latitude,p.coords.longitude];onSuccess?.(p)},()=>{renderHome();toast("위치 권한이 없어 선택한 해변을 기준으로 추천합니다.")},{timeout:7000})}
-async function loadData(){try{await fetchBeachConditions();renderHome()}catch(e){$("#statusHero").innerHTML=`<div><h2>정보를 불러오지 못했어요.</h2><p>${e.message}</p><button class="outline-btn" onclick="location.reload()">다시 시도</button></div>`}}
+function loadData(){renderHome()}
 try{
  options();renderHome();renderFacilities();renderMap();renderReports();loadData();
 }catch(error){
