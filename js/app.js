@@ -14,6 +14,7 @@ const demoBeachData={
  dadaepo:{status:"caution",statusText:"주의",temp:28,water:25,wave:0.8,wind:4.6,uv:7,rain:"약한 비 가능",crowd:"한적",swim:"주의",jelly:"보통",desc:"강수 가능성을 확인하는 시연용 상태입니다."}
 };
 if(demoMode)beaches.forEach(beach=>Object.assign(beach,demoBeachData[beach.id]));
+if(demoMode&&facilities.length===0)facilities.push(...demoFacilities);
 const beachCoordinates={haeundae:[35.1587,129.1604],gwangalli:[35.1532,129.1187],songjeong:[35.1786,129.1997],ilgwang:[35.2592,129.2333],songdo:[35.0755,129.0173],dadaepo:[35.0466,128.9657]};
 const statusIcon={safe:"✓",caution:"!",danger:"×",unknown:"…"},statusLabel={received:"접수",checking:"확인 중",done:"처리 완료"};
 const beachName=id=>beaches.find(b=>b.id===id)?.name||id;
