@@ -1,0 +1,13 @@
+{
+  "name": "바다모아 - 부산 바다 통합 안내",
+  "short_name": "바다모아",
+  "description": "부산 해수욕장 정보와 편의시설, 시민 신고를 한곳에서 확인합니다.",
+  "start_url": "./?mode=demo",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4fbfb",
+  "theme_color": "#087f8c",
+  "lang": "ko",
+  "orientation": "portrait-primary",
+  "icons": [{"src":"./assets/app-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
