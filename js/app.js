@@ -1,5 +1,8 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let selected="haeundae",activeFilters=new Set(),reports=reportStore.get(sampleReports),photoData="",userLocation=null;
+const apiPendingMode=new URLSearchParams(location.search).get("mode")==="api-pending";
+const unavailableText=apiPendingMode?"연동 대기":"정보 없음";
+const beachStatusText=b=>apiPendingMode?"연동 대기":b.statusText;
 const beachCoordinates={haeundae:[35.1587,129.1604],gwangalli:[35.1532,129.1187],songjeong:[35.1786,129.1997],ilgwang:[35.2592,129.2333],songdo:[35.0755,129.0173],dadaepo:[35.0466,128.9657]};
 const statusIcon={safe:"✓",caution:"!",danger:"×",unknown:"…"},statusLabel={received:"접수",checking:"확인 중",done:"처리 완료"};
 const beachName=id=>beaches.find(b=>b.id===id)?.name||id;
@@ -16,12 +19,14 @@ function renderRecommendation(b){
  $("#useMyLocation").onclick=()=>getLocation(()=>{renderHome();toast("현재 위치를 기준으로 다시 추천했습니다.")});
 }
 function options(){const html=beaches.map(b=>`<option value="${b.id}">${b.name}</option>`).join("");$("#beachSelect").innerHTML=html;$("#reportBeach").innerHTML=html;$("#beachSelect").value=selected}
-function marker(b,detail=false){return `<button class="marker ${b.status}" style="left:${b.x}%;top:${b.y}%" data-beach="${b.id}" aria-label="${b.name} ${b.statusText}"><span>${detail?"●":statusIcon[b.status]}</span></button>`}
+function marker(b,detail=false){return `<button class="marker ${b.status}" style="left:${b.x}%;top:${b.y}%" data-beach="${b.id}" aria-label="${b.name} ${beachStatusText(b)}"><span>${detail?"●":statusIcon[b.status]}</span></button>`}
 function reportPins(){return reports.map((r,i)=>{const b=beaches.find(x=>x.id===r.beach);return `<button class="report-pin" style="left:${Math.min(94,b.x+(i%3)*3)}%;top:${Math.min(90,b.y+8+(i%2)*4)}%" data-report="${r.id}" aria-label="${beachName(r.beach)} ${r.type==="jellyfish"?"해파리":"쓰레기"} 신고">${r.type==="jellyfish"?"🪼":"♻"}</button>`}).join("")}
 function renderHome(){
  const b=beaches.find(x=>x.id===selected);
- $("#statusHero").innerHTML=`<div class="status-icon">${statusIcon[b.status]}</div><div><p>${b.name} 종합 상태</p><h2>${b.desc}</h2><p>실시간 수치는 제공하지 않습니다. 현장 안내를 우선 확인하세요.</p></div><span class="status-badge ${b.status}">${b.statusText}</span>`;
- const pending="정보 없음",metrics=[["🌤","기온",b.temp==null?pending:`${b.temp}°C`],["🌡","수온",b.water==null?pending:`${b.water}°C`],["🌊","파고",b.wave==null?pending:`${b.wave}m`],["🍃","풍속",b.wind==null?pending:`${b.wind}m/s`],["☀","자외선",b.uv==null?pending:String(b.uv)],["☂","강수",b.rain??pending],["♟","혼잡도",b.crowd??pending],["🏊","입수",b.swim??"현장 확인 필요"],["🪼","해파리",b.jelly??pending]];
+ const description=apiPendingMode?"서비스 키 발급 후 실제 공공데이터가 표시됩니다.":b.desc;
+ const subtext=apiPendingMode?"현재 공공데이터 API 연동 대기 중입니다.":"실시간 수치는 제공하지 않습니다. 현장 안내를 우선 확인하세요.";
+ $("#statusHero").innerHTML=`<div class="status-icon">${statusIcon[b.status]}</div><div><p>${b.name} 종합 상태</p><h2>${description}</h2><p>${subtext}</p></div><span class="status-badge ${b.status}">${beachStatusText(b)}</span>`;
+ const pending=unavailableText,metrics=[["🌤","기온",b.temp==null?pending:`${b.temp}°C`],["🌡","수온",b.water==null?pending:`${b.water}°C`],["🌊","파고",b.wave==null?pending:`${b.wave}m`],["🍃","풍속",b.wind==null?pending:`${b.wind}m/s`],["☀","자외선",b.uv==null?pending:String(b.uv)],["☂","강수",b.rain??pending],["♟","혼잡도",b.crowd??pending],["🏊","입수",b.swim??(apiPendingMode?pending:"현장 확인 필요")],["🪼","해파리",b.jelly??pending]];
  $("#metrics").innerHTML=metrics.map(m=>`<article class="metric"><span>${m[0]}</span><div><p>${m[1]}</p><strong>${m[2]}</strong></div></article>`).join("");
  renderRecommendation(b);
  $("#miniMap").innerHTML=beaches.map(b=>marker(b)).join("");
@@ -32,7 +37,7 @@ function renderMap(){
  $("#fullMap").innerHTML=beaches.map(b=>marker(b,true)).join("")+reportPins();
  renderMapDetail(selected);bindMapButtons();$$("[data-report]").forEach(el=>el.onclick=()=>showReport(el.dataset.report));
 }
-function renderMapDetail(id){const b=beaches.find(x=>x.id===id),count=reports.filter(r=>r.beach===id).length;$("#mapDetail").innerHTML=`<article class="detail-card"><div><h2>${b.name} <span class="status-badge ${b.status}">${b.statusText}</span></h2><p>${b.desc}</p></div><div><strong>입수 ${b.swim??"현장 확인 필요"}</strong><br><span>파고 ${b.wave==null?"정보 없음":b.wave+"m"} · 사용자 신고 ${count}건</span></div></article>`}
+function renderMapDetail(id){const b=beaches.find(x=>x.id===id),count=reports.filter(r=>r.beach===id).length;$("#mapDetail").innerHTML=`<article class="detail-card"><div><h2>${b.name} <span class="status-badge ${b.status}">${beachStatusText(b)}</span></h2><p>${apiPendingMode?"공공데이터 API 연동 대기 중입니다.":b.desc}</p></div><div><strong>입수 ${b.swim??(apiPendingMode?unavailableText:"현장 확인 필요")}</strong><br><span>파고 ${b.wave==null?unavailableText:b.wave+"m"} · 사용자 신고 ${count}건</span></div></article>`}
 function bindMapButtons(){$$("[data-beach]").forEach(el=>el.onclick=()=>{selected=el.dataset.beach;$("#beachSelect").value=selected;renderHome();renderMap();toast(`${beachName(selected)} 정보를 열었습니다.`)})}
 const filters=["샤워장","탈의실","화장실","짐 보관소","음수대","온수","드라이기","대형 짐 보관","무료 이용","운영 중"];
 function renderFacilities(){
@@ -54,6 +59,7 @@ function setReportType(type){$("#reportType").value=type;$$("[data-report-tab]")
 function getLocation(onSuccess){if(!navigator.geolocation){toast("위치 기능을 지원하지 않아 선택한 해변을 기준으로 추천합니다.");return}navigator.geolocation.getCurrentPosition(p=>{userLocation=[p.coords.latitude,p.coords.longitude];onSuccess?.(p)},()=>{renderHome();toast("위치 권한이 없어 선택한 해변을 기준으로 추천합니다.")},{timeout:7000})}
 function loadData(){renderHome()}
 try{
+ if(apiPendingMode)$("#serviceMode").innerHTML="<i></i> 공공데이터 API 연동 대기 중";
  options();renderHome();renderFacilities();renderMap();renderReports();loadData();
 }catch(error){
  console.error("바다모아 초기화 오류:",error);
