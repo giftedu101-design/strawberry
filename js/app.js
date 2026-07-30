@@ -17,6 +17,7 @@ if(demoMode)beaches.forEach(beach=>Object.assign(beach,demoBeachData[beach.id]))
 const beachCoordinates={haeundae:[35.1587,129.1604],gwangalli:[35.1532,129.1187],songjeong:[35.1786,129.1997],ilgwang:[35.2592,129.2333],songdo:[35.0755,129.0173],dadaepo:[35.0466,128.9657]};
 const statusIcon={safe:"✓",caution:"!",danger:"×",unknown:"…"},statusLabel={received:"접수",checking:"확인 중",done:"처리 완료"};
 const beachName=id=>beaches.find(b=>b.id===id)?.name||id;
+let installPrompt=null;
 function toast(msg){const el=$("#toast");el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2400)}
 function distanceKm(a,b){const rad=n=>n*Math.PI/180,R=6371,dLat=rad(b[0]-a[0]),dLon=rad(b[1]-a[1]);const q=Math.sin(dLat/2)**2+Math.cos(rad(a[0]))*Math.cos(rad(b[0]))*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(q))}
 function getQuietRecommendation(){const origin=userLocation||beachCoordinates[selected];return beaches.filter(b=>b.id!==selected&&b.crowd!=="혼잡"&&b.swim!=="통제").map(b=>({...b,distance:distanceKm(origin,beachCoordinates[b.id])})).sort((a,b)=>a.distance-b.distance)[0]}
@@ -83,3 +84,7 @@ $("#photo").onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>2*1024
 $("#reportForm").onsubmit=e=>{e.preventDefault();const type=$("#reportType").value,memo=$("#memo").value.trim(),time=$("#reportTime").value;if(!time||memo.length<5||(type==="trash"&&(!$("#trashType").value||!$("#amount").value))){$("#formError").textContent="필수 항목을 확인하고 설명을 5자 이상 입력해 주세요.";return}const uniqueId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2,10)}`;const item={id:uniqueId,type,beach:$("#reportBeach").value,time,memo,status:"received",coords:$("#coords").value,photo:photoData,trashType:$("#trashType").value,amount:$("#amount").value};reports=reportStore.add(item);e.target.reset();photoData="";$("#photoPreview").innerHTML="<span>📷</span><p>발견 현장 사진</p><small>JPG, PNG · 최대 2MB</small>";$("#formError").textContent="";setReportType(type);renderReports();renderMap();toast("신고가 접수되었습니다. 감사합니다!")};
 $("#modalClose").onclick=()=>{$("#modal").classList.remove("open");$("#modal").setAttribute("aria-hidden","true")};$("#modal").onclick=e=>{if(e.target===$("#modal"))$("#modalClose").click()};document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#modal").classList.contains("open"))$("#modalClose").click()});
 $("#reportTime").value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(error=>console.warn("오프라인 기능 등록 실패:",error)));
+window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();installPrompt=event;$("#installBtn").classList.remove("hidden")});
+$("#installBtn").onclick=async()=>{if(!installPrompt){toast("브라우저 메뉴에서 ‘홈 화면에 추가’를 선택해 주세요.");return}await installPrompt.prompt();installPrompt=null;$("#installBtn").classList.add("hidden")};
+window.addEventListener("appinstalled",()=>toast("바다모아가 홈 화면에 설치되었습니다."));
