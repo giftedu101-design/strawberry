@@ -31,11 +31,13 @@ function renderRecommendation(b){
  $("#chooseRecommended").onclick=()=>{selected=rec.id;$("#beachSelect").value=selected;renderHome();renderFacilities();toast(`${rec.name} 정보를 표시합니다.`)};
  $("#useMyLocation").onclick=()=>getLocation(()=>{renderHome();toast("현재 위치를 기준으로 다시 추천했습니다.")});
 }
-function options(){const html=beaches.map(b=>`<option value="${b.id}">${b.name}</option>`).join("");$("#beachSelect").innerHTML=html;$("#reportBeach").innerHTML=html;$("#beachSelect").value=selected}
+function syncBeachSelectors(){$("#beachSelect").value=selected;$$("[data-quick-beach]").forEach(button=>{const active=button.dataset.quickBeach===selected;button.classList.toggle("active",active);button.setAttribute("aria-pressed",String(active))})}
+function options(){const html=beaches.map(b=>`<option value="${b.id}">${b.name}</option>`).join("");$("#beachSelect").innerHTML=html;$("#reportBeach").innerHTML=html;$("#beachQuickSelect").innerHTML=beaches.map(b=>`<button type="button" data-quick-beach="${b.id}">${b.name.replace(" 해수욕장","")}</button>`).join("");$$("[data-quick-beach]").forEach(button=>button.onclick=()=>{selected=button.dataset.quickBeach;syncBeachSelectors();renderHome();renderFacilities()});syncBeachSelectors()}
 function marker(b,detail=false){return `<button class="marker ${b.status}" style="left:${b.x}%;top:${b.y}%" data-beach="${b.id}" aria-label="${b.name} ${beachStatusText(b)}"><span>${detail?"●":statusIcon[b.status]}</span></button>`}
 function reportPins(){return reports.map((r,i)=>{const b=beaches.find(x=>x.id===r.beach);return `<button class="report-pin" style="left:${Math.min(94,b.x+(i%3)*3)}%;top:${Math.min(90,b.y+8+(i%2)*4)}%" data-report="${r.id}" aria-label="${beachName(r.beach)} ${r.type==="jellyfish"?"해파리":"쓰레기"} 신고">${r.type==="jellyfish"?"🪼":"♻"}</button>`}).join("")}
 function renderHome(){
  const b=beaches.find(x=>x.id===selected);
+ syncBeachSelectors();
  const description=apiPendingMode?"서비스 키 발급 후 실제 공공데이터가 표시됩니다.":b.desc;
  const subtext=apiPendingMode?"현재 공공데이터 API 연동 대기 중입니다.":demoMode?"아래 수치는 기능 시연을 위한 예시이며 실제 정보가 아닙니다.":"실시간 수치는 제공하지 않습니다. 현장 안내를 우선 확인하세요.";
  $("#statusHero").innerHTML=`<div class="status-icon">${statusIcon[b.status]}</div><div><p>${b.name} 종합 상태</p><h2>${description}</h2><p>${subtext}</p></div><span class="status-badge ${b.status}">${beachStatusText(b)}</span>`;
@@ -51,7 +53,7 @@ function renderMap(){
  renderMapDetail(selected);bindMapButtons();$$("[data-report]").forEach(el=>el.onclick=()=>showReport(el.dataset.report));
 }
 function renderMapDetail(id){const b=beaches.find(x=>x.id===id),count=reports.filter(r=>r.beach===id).length;$("#mapDetail").innerHTML=`<article class="detail-card"><div><h2>${b.name} <span class="status-badge ${b.status}">${beachStatusText(b)}</span></h2><p>${apiPendingMode?"공공데이터 API 연동 대기 중입니다.":b.desc}</p></div><div><strong>입수 ${b.swim??(apiPendingMode?unavailableText:"현장 확인 필요")}</strong><br><span>파고 ${b.wave==null?unavailableText:b.wave+"m"} · 사용자 신고 ${count}건</span></div></article>`}
-function bindMapButtons(){$$("[data-beach]").forEach(el=>el.onclick=()=>{selected=el.dataset.beach;$("#beachSelect").value=selected;renderHome();renderMap();toast(`${beachName(selected)} 정보를 열었습니다.`)})}
+function bindMapButtons(){$$("[data-beach]").forEach(el=>el.onclick=()=>{selected=el.dataset.beach;syncBeachSelectors();renderHome();renderMap();toast(`${beachName(selected)} 정보를 열었습니다.`)})}
 const filters=["샤워장","탈의실","화장실","짐 보관소","음수대","온수","드라이기","대형 짐 보관","무료 이용","운영 중"];
 function renderFacilities(){
  $("#facilityFilters").innerHTML=filters.map(f=>`<button class="${activeFilters.has(f)?"active":""}" data-filter="${f}">${f}</button>`).join("");
@@ -80,7 +82,7 @@ try{
  const hero=document.querySelector("#statusHero");
  if(hero)hero.innerHTML=`<div class="load-error"><h2>바다 정보를 표시하지 못했어요.</h2><p>페이지를 새로고침해 주세요.</p><button class="outline-btn" onclick="location.reload()">↻ 다시 시도</button></div>`;
 }
-$$("[data-view]").forEach(b=>b.onclick=()=>switchView(b.dataset.view));$("#beachSelect").onchange=e=>{selected=e.target.value;renderHome();renderFacilities()};$("#retryBtn").onclick=()=>{loadData();toast("최신 정보로 갱신했습니다.")};$("#locateBtn").onclick=()=>getLocation(()=>renderHome());$("#reportLocate").onclick=()=>getLocation(p=>{$("#coords").value=`${p.coords.latitude.toFixed(5)},${p.coords.longitude.toFixed(5)}`});$$("[data-report-tab]").forEach(b=>b.onclick=()=>setReportType(b.dataset.reportTab));$("#reportFilter").onchange=renderReports;
+$$("[data-view]").forEach(b=>b.onclick=()=>switchView(b.dataset.view));$("#beachSelect").onchange=e=>{selected=e.target.value;syncBeachSelectors();renderHome();renderFacilities()};$("#retryBtn").onclick=()=>{loadData();toast("최신 정보로 갱신했습니다.")};$("#locateBtn").onclick=()=>getLocation(()=>renderHome());$("#reportLocate").onclick=()=>getLocation(p=>{$("#coords").value=`${p.coords.latitude.toFixed(5)},${p.coords.longitude.toFixed(5)}`});$$("[data-report-tab]").forEach(b=>b.onclick=()=>setReportType(b.dataset.reportTab));$("#reportFilter").onchange=renderReports;
 $("#photo").onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>2*1024*1024){toast("사진은 2MB 이하만 가능합니다.");e.target.value="";return}const rd=new FileReader();rd.onload=()=>{photoData=rd.result;$("#photoPreview").innerHTML=`<img src="${photoData}" alt="선택한 신고 사진 미리보기">`};rd.readAsDataURL(f)};
 $("#reportForm").onsubmit=e=>{e.preventDefault();const type=$("#reportType").value,memo=$("#memo").value.trim(),time=$("#reportTime").value;if(!time||memo.length<5||(type==="trash"&&(!$("#trashType").value||!$("#amount").value))){$("#formError").textContent="필수 항목을 확인하고 설명을 5자 이상 입력해 주세요.";return}const uniqueId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2,10)}`;const item={id:uniqueId,type,beach:$("#reportBeach").value,time,memo,status:"received",coords:$("#coords").value,photo:photoData,trashType:$("#trashType").value,amount:$("#amount").value};reports=reportStore.add(item);e.target.reset();photoData="";$("#photoPreview").innerHTML="<span>📷</span><p>발견 현장 사진</p><small>JPG, PNG · 최대 2MB</small>";$("#formError").textContent="";setReportType(type);renderReports();renderMap();toast("신고가 접수되었습니다. 감사합니다!")};
 $("#modalClose").onclick=()=>{$("#modal").classList.remove("open");$("#modal").setAttribute("aria-hidden","true")};$("#modal").onclick=e=>{if(e.target===$("#modal"))$("#modalClose").click()};document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#modal").classList.contains("open"))$("#modalClose").click()});
