@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="./css/styles.css">
   <link rel="stylesheet" href="./css/recommendation.css">
   <link rel="stylesheet" href="./css/mobile-pwa.css">
+  <link rel="stylesheet" href="./css/reference-inspired.css">
 </head>
 <body>
   <a class="skip" href="#main">본문 바로가기</a>
@@ -35,12 +36,13 @@
       <div class="hero-shell">
         <div class="hero-copy">
           <p class="eyebrow">BUSAN OCEAN SAFETY</p>
-          <h1>오늘 부산 바다,<br><em>마음 놓고 즐겨요.</em></h1>
-          <p>날씨부터 해파리, 편의시설까지 한눈에 확인하세요.</p>
+          <h1>오늘,<br>어느 <em>바다로 갈까요?</em></h1>
+          <p>부산의 바다를 고르고 지금 상태를 한눈에 확인하세요.</p>
         </div>
         <div class="location-row">
           <label for="beachSelect">확인할 해수욕장</label>
           <select id="beachSelect" aria-label="해수욕장 선택"></select>
+          <div id="beachQuickSelect" class="beach-quick-select" role="group" aria-label="해수욕장 빠른 선택"></div>
         </div>
         <article id="statusHero" class="status-hero" aria-live="polite"></article>
         <aside id="aiRecommendation" class="ai-recommendation hidden" aria-live="polite"></aside>
